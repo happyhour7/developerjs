@@ -1,0 +1,26 @@
+{
+  "name": "developerjs",
+  "version": "1.1.5",
+  "description": "developerjs",
+  "main": "developerjs.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "developerjs"
+  ],
+  "author": {
+    "name": "happyhour7@163.com"
+  },
+  "license": "ISC",
+  "_npmUser": {
+    "name": "happyhour7",
+    "email": "happyhour7@163.com"
+  },
+  "maintainers": [
+    {
+      "name": "happyhour7",
+      "email": "happyhour7@163.com"
+    }
+  ]
+}
