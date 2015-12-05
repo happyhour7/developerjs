@@ -10,27 +10,82 @@
       
 ##DEMO  
 ```js
-var express = require('express'),
-    pjax = require('express-pjax'),//developerjs默认支持pjax页面跳转
-    path = require('path'),
-    hbs = require('hbs'),
-    app = express(),
-    init=require('developerjs');
+var express = require('express');
+var path = require('path');
+var favicon = require('serve-favicon');
+var logger = require('morgan');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
+var developerjs=require("developerJS");
+var pjax = require('express-pjax');
+var hbs = require('hbs');
+var app = express();
 
-//developerjs默认支持handlebar模板引擎
+// view engine setup
+//developerjs默认支持handlebar模板引擎 
 app.set('views', path.join(__dirname, 'views'));
+
 app.engine('html', hbs.__express);
 app.set('view engine', 'html');
+ 
+ 
+//自动读取配置文件更新中间件 
+app.use(developerjs.ReadConFigFile());
 
+// uncomment after placing your favicon in /public
+//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
-//自动读取配置文件更新中间件
-app.use(init.ReadConFigFile());
-.
-.
-//  初始化自动路由映射
-init.init(app);
+// uncomment after placing your favicon in /public
+hbs.registerPartials(__dirname + '/views/partials');
+//app.use(favicon(__dirname + '/public/favicon.ico'));
+app.use((function(){
+  return function(req,res,next){
+    hbs.registerPartials(__dirname + '/views/partials');
+    next();
+  }
+})());
+app.use(express.static(path.join(__dirname, 'admin')));
+app.use(pjax());
+developerjs.init(app);
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
 
-app.listen(3000)
+// error handlers
+
+// development error handler
+// will print stacktrace
+if (app.get('env') === 'development') {
+  app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+      message: err.message,
+      error: err
+    });
+  });
+}
+
+// production error handler
+// no stacktraces leaked to user
+app.use(function(err, req, res, next) {
+  res.status(err.status || 500);
+  res.render('error', {
+    message: err.message,
+    error: {}
+  });
+});
+
+app.listen(8080);
+module.exports = app;
+
 ```
 
 
@@ -48,29 +103,21 @@ $ npm install -g developerjs
 
 ```js
 {
-    "defaultActionName": "index",           //每个controller的入口action名称，即每个文件夹下的默认html名称，如：/login路由会转到：/login/index
-    //模板配置
+    "defaultActionName": "index",           
     "layout": {
-        "default-layout": "new_layout",     //默认模板页，如果不在后续指定则使用该模板页
-        "todolist/index": "[none]",         //指定todolist/index路由的页面不适用任何模板
-        "login/index": "default"            //指定login/index路由的页面使用default模板
+        "default-layout": "[none]" ,   
+        "todolist/index": "[none]",   //不采用模板
+        "login/index": "default"     //默认模板       
     },
-    //页面渲染配置
     "renderOptions":{
-        "detail": "mvc-config-detail"       //url路径：渲染该路径对应的数据文件（JSON格式）
+        "home": "mvc-config-files/mvc-config-home"   //初始化数据配置文件    
     },
-    //路由配置，专门解决前后台路由策略不一致问题
-    "router":{
-        "fashion/index.html(和后台匹配的路由方式)":"channel/fashion(本地访问的路由方式)"
-        //或者
-        "wangwei":"router-config-wangwei/router.json"(文件或文件夹名称必须以'router-config-'开头)
-    },
-    //ajax实现代码
+
     "ajax": {
         "todolist/getlist": ["这是我的list","这是我的list","这是我的list","这是我的list","这是我的list","这是我的list","这是我的list","这是我的list"],
             "todolist/getlist2": {
-            "ajaxRepeat": 3,                                            //该条数据重复多少遍返回给客户端，对于频道页、瀑布流等页面很有用
-            "ajaxData": {"one":"one","two":"two","three":"three"}       //数据体
+            "ajaxRepeat": 3,                                            
+            "ajaxData": {"one":"one","two":"two","three":"three"}       
         },
         "haha3": [1,2,3,4,5,6,7,8,9,0],
         "hah4": [1, 2, 3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 32, 1],
@@ -110,6 +157,7 @@ $ npm install -g developerjs
 
     2015-4-15 1.0.1版本：在前版基础上，追加路由可配置;
     2015-4-15 1.1.5版本：在前版基础上，更新了配置文件说明;
+    2015-4-15 1.1.6版本：在前版基础上，更改了文件大小写导致的模块无法加载问题（centos）;
     
 ## License
     [MIT](LICENSE)
