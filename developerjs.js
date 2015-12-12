@@ -317,7 +317,7 @@ function getUserOptions(options,mustOptions) {
     } else {
         result= options;
     }
-    if(mustOptions==="string" && mustOptions.toLowerCase().indexOf('mvc-config') === 0)
+    if(typeof(mustOptions)==="string" && mustOptions.toLowerCase().indexOf('mvc-config') === 0)
     {
         _tmp=readConfig(mustOptions.toLowerCase().indexOf('.json') > 0 ? mustOptions : mustOptions + ".json");
         return bindJSON(result,_tmp);
