@@ -206,7 +206,7 @@ function setActionRouter(app, url, path, isAjax) {
             logger.log("模板路径：" + getLayout(urlKey) + "           路径：" + urlKey);
             options = dealOptions({
                 layout: getLayout(urlKey)
-            }, getUserOptions(config.renderOptions[urlKey]));
+            }, getUserOptions(config.renderOptions[urlKey],config.renderOptions["*"]));
             res.renderPjax(path, options);
         } else {
             res.send(getAjaxData(urlKey));
@@ -284,7 +284,7 @@ function isExists(isexitst, app, newFilePath, url, _res) {
         setActionRouter(app, url, 'actions' + url);
         options = dealOptions({
             layout: getLayout(urlKey)
-        }, getUserOptions(config.renderOptions[urlKey]));
+        }, getUserOptions(config.renderOptions[urlKey],config.renderOptions["*"]));
         _res.renderPjax('actions/' + urlKey, options);
     } else {
         logger.error("[-->missing action<--]\r\n    action视图文件不存在：" + newFilePath + '.html');
@@ -310,12 +310,36 @@ function dealOptions(options, userOptions) {
     return options;
 }
 
-function getUserOptions(options) {
+function getUserOptions(options,mustOptions) {
+    var result={},_tmp={};
     if (typeof(options) === 'string' && options.toLowerCase().indexOf('mvc-config') === 0) {
-        return readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
+        result= readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
     } else {
-        return options;
+        result= options;
     }
+    if(mustOptions==="string" && mustOptions.toLowerCase().indexOf('mvc-config') === 0)
+    {
+        _tmp=readConfig(mustOptions.toLowerCase().indexOf('.json') > 0 ? mustOptions : mustOptions + ".json");
+        return bindJSON(result,_tmp);
+    }
+    else if(typeof mustOptions!=="undefined")
+    {
+        return bindJSON(result,_tmp);
+    }
+    return result;
+}
+/*将两个JSON合并*/
+function bindJSON(json1,json2){
+    var json={};
+    for(var key in json1)
+    {
+        json[key]=json1[key];
+    }
+    for(var key in json2)
+    {
+        json[key]=json2[key];
+    }
+    return json;
 }
 
 function getUserRouter() {
