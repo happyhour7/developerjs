@@ -12,7 +12,7 @@ var logger = require('./mvc-log'),
     hbs = require('hbs'),
     helper = require('./helper'),
     dRouter = require('./router');
-     
+
 readConfig();
 argus.dealArguments();
 
@@ -154,7 +154,7 @@ function readConfig() {
  */
 /*function isFileChanged(fileName){
 
-}*/
+ }*/
 
 /**
  * 函数功能描述           :从ajax将配置中获取用户配置的返回数据
@@ -189,7 +189,6 @@ function setActionRouter(app, url, path, isAjax) {
         routers = {},
         userUrl = url;
     routers = getUserRouter();
-    console.log(urlKey);
     if (typeof routers!=='undefined'&&routers!=null&&typeof routers[url] !== 'undefined' && routers[url] !== null) {
         userUrl = routers[url];
     }
@@ -395,10 +394,8 @@ module.exports.ReadConFigFile = function() {
             config = JSON.parse(fs.readFileSync('./mvc-config.json', 'utf-8'));
             configFileCurrentModifyTime = stat.mtime + '';
             helper.registerHelper(config.helper);
-
+            hbs.registerPartials(__dirname + '/views/partials');
         }
-        hbs.registerPartials(__dirname + '/views/partials');
         next();
-
     };
 };

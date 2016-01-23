@@ -30,7 +30,17 @@ app.set('view engine', 'html');
  
  
 //自动读取配置文件更新中间件 
-app.use(developerjs.ReadConFigFile());
+var arguments = process.argv.splice(2);
+if(arguments.length==0)
+{
+    //自动读取配置文件更新中间件
+    app.use(developerjs.ReadConFigFile());
+}
+else if(arguments[0]=="-online")
+{
+    //online模式下禁用配置文件二次读取
+    developerjs.ReadConFigFile();
+}
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -160,7 +170,9 @@ $ npm install -g developerjs
     2015-12-10 1.1.6版本：在前版基础上，更改了文件大小写导致的模块无法加载问题（centos）;
     2015-12-13 1.1.7版本：在前版基础上，增加配置参数通配符*，详见mvc-config.js(用法与普通路径完全一致);
     2015-12-13 1.1.8版本：在前版基础上，解决一个BUG;
-    
+    2016-1-23  1.1.9版本：~;
+    2016-1-23  1.2.1版本：~；
+    2016-1-23  1.2.1版本：更改默认模式为-online模式，降低online模式的实时可配置性，将online模式变为真正在线运行的稳定模式,减少内存泄露；
 ## License
     [MIT](LICENSE)
   虽然代码很屎，但违版必究，我说真的，我真的说真的！(LICENSE)

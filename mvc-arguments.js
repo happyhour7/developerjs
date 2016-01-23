@@ -2,7 +2,8 @@ exports.dealArguments = function() {
     var arguments = process.argv.splice(2);
     global.logRank = '-dev';
     if(arguments.length===0){
-        argumentsCommands['-dev']();
+        //默认模式为上线模式
+        argumentsCommands['-online']();
     }else{
         for (var i = 0; i < arguments.length; i++) {
             argumentsCommands[arguments[i]]();
