@@ -11,7 +11,8 @@ var logger = require('./mvc-log'),
     configFileCurrentModifyTime = '',
     hbs = require('hbs'),
     helper = require('./helper'),
-    dRouter = require('./router');
+    dRouter = require('./router'),
+    publicOptions={};
      
 readConfig();
 argus.dealArguments();
@@ -207,7 +208,23 @@ function setActionRouter(app, url, path, isAjax) {
             options = dealOptions({
                 layout: getLayout(urlKey)
             }, getUserOptions(config.renderOptions[urlKey]));
-            res.renderPjax(path, options);
+            //设置一个拦截器，提供开发者处理请求
+            if(config.diyAction[userUrl]!=null){
+                var path=config.diyAction[userUrl].apply(options,req, res, next);
+                if(typeof path==="undefined")
+                {
+                    res.renderPjax(path, options);
+                }
+                else
+                {
+                    res.renderPjax(path.path, path.options);
+                }
+            }
+            else
+            {
+                res.renderPjax(path, options);
+            }
+            
         } else {
             res.send(getAjaxData(urlKey));
         }
@@ -267,6 +284,16 @@ module.exports.init = function(app) {
         exports.addAction(app, req.originalUrl, res);
     });
 };
+
+
+module.exports.use=function(path,func){
+    config.diyAction={};
+    for(var key in func)
+    {
+        var allPath=path+key;
+        config.diyAction[allPath]=func[key];
+    }
+}
 /**
  * 函数功能描述           :判断一个html模板是否存在的回调函数
  * @param       :isexitst       文件是否存在，true、false
@@ -311,13 +338,38 @@ function dealOptions(options, userOptions) {
 }
 
 function getUserOptions(options) {
+    var _options={};
     if (typeof(options) === 'string' && options.toLowerCase().indexOf('mvc-config') === 0) {
-        return readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
+        _options=readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
     } else {
-        return options;
+        _options=options;
     }
+    return copyJSON(publicOptions,_options);
 }
+function copyJSON(source,dec) {
+    for(var key in source)
+    {
+        dec[key]=source[key];
+    }
+    return dec;
+}
+/*
+    获取全局配置数据
+ */
+function getPublicOptions(){
+    var options=config.renderOptions['*'];
+    if(typeof options!=='undefined'&&options!==null&&options!=="")
+    {
+        if(typeof options==="string"&&options.toLowerCase().indexOf('mvc-config') === 0)
+        {
+            publicOptions=readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
+        }
+        else {
+            publicOptions=options;
+        }
+    }
 
+}
 function getUserRouter() {
     var userRouters = dRouter.getRouter(config.router);
     return userRouters;
@@ -371,7 +423,8 @@ module.exports.ReadConFigFile = function() {
             config = JSON.parse(fs.readFileSync('./mvc-config.json', 'utf-8'));
             configFileCurrentModifyTime = stat.mtime + '';
             helper.registerHelper(config.helper);
-
+            //获取全局配置数据
+            getPublicOptions();
         }
         hbs.registerPartials(__dirname + '/views/partials');
         next();
