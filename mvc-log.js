@@ -39,7 +39,11 @@ module.exports = {
             logType = type.type || "success";
             logrank = type.rank || "-debug";
         }
-        global.logRank=global.logRank||'-dev';
+        global.logRank=global.logRank||'-online';
+
+
+
+
         if (logrank !== global.logRank)
         {
             return;

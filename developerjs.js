@@ -13,7 +13,7 @@ var logger = require('./mvc-log'),
     helper = require('./helper'),
     dRouter = require('./router'),
     publicOptions={};
-     
+
 readConfig();
 argus.dealArguments();
 
@@ -155,7 +155,7 @@ function readConfig() {
  */
 /*function isFileChanged(fileName){
 
-}*/
+ }*/
 
 /**
  * 函数功能描述           :从ajax将配置中获取用户配置的返回数据
@@ -190,7 +190,6 @@ function setActionRouter(app, url, path, isAjax) {
         routers = {},
         userUrl = url;
     routers = getUserRouter();
-    console.log(urlKey);
     if (typeof routers!=='undefined'&&routers!=null&&typeof routers[url] !== 'undefined' && routers[url] !== null) {
         userUrl = routers[url];
     }
@@ -224,7 +223,6 @@ function setActionRouter(app, url, path, isAjax) {
             {
                 res.renderPjax(path, options);
             }
-            
         } else {
             res.send(getAjaxData(urlKey));
         }
@@ -311,7 +309,7 @@ function isExists(isexitst, app, newFilePath, url, _res) {
         setActionRouter(app, url, 'actions' + url);
         options = dealOptions({
             layout: getLayout(urlKey)
-        }, getUserOptions(config.renderOptions[urlKey]));
+        }, getUserOptions(config.renderOptions[urlKey],config.renderOptions["*"]));
         _res.renderPjax('actions/' + urlKey, options);
     } else {
         logger.error("[-->missing action<--]\r\n    action视图文件不存在：" + newFilePath + '.html');
@@ -346,6 +344,7 @@ function getUserOptions(options) {
     }
     return copyJSON(publicOptions,_options);
 }
+
 function copyJSON(source,dec) {
     for(var key in source)
     {
@@ -425,9 +424,8 @@ module.exports.ReadConFigFile = function() {
             helper.registerHelper(config.helper);
             //获取全局配置数据
             getPublicOptions();
+            hbs.registerPartials(__dirname + '/views/partials');
         }
-        hbs.registerPartials(__dirname + '/views/partials');
         next();
-
     };
 };
