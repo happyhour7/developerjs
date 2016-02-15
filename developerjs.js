@@ -12,7 +12,8 @@ var logger = require('./mvc-log'),
     hbs = require('hbs'),
     helper = require('./helper'),
     dRouter = require('./router'),
-    publicOptions={};
+    publicOptions={},
+    urlMap={};
 
 readConfig();
 argus.dealArguments();
@@ -193,7 +194,9 @@ function setActionRouter(app, url, path, isAjax) {
     if (typeof routers!=='undefined'&&routers!=null&&typeof routers[url] !== 'undefined' && routers[url] !== null) {
         userUrl = routers[url];
     }
+    urlMap[userUrl]=path;
     app.get(userUrl, function(req, res, next) {
+        var path=urlMap[userUrl];
         if (req.header('X-PJAX')) {
             logger.log("[-->go url<--]\r\n    转到Pjax路由:" + path, 'pjax');
         } else if (isAjax !== true) {
@@ -207,22 +210,8 @@ function setActionRouter(app, url, path, isAjax) {
             options = dealOptions({
                 layout: getLayout(urlKey)
             }, getUserOptions(config.renderOptions[urlKey]));
-            //设置一个拦截器，提供开发者处理请求
-            if(config.diyAction[userUrl]!=null){
-                var path=config.diyAction[userUrl].apply(options,req, res, next);
-                if(typeof path==="undefined")
-                {
-                    res.renderPjax(path, options);
-                }
-                else
-                {
-                    res.renderPjax(path.path, path.options);
-                }
-            }
-            else
-            {
-                res.renderPjax(path, options);
-            }
+            res.renderPjax(path, options);
+
         } else {
             res.send(getAjaxData(urlKey));
         }
@@ -265,7 +254,7 @@ module.exports.init = function(app) {
                         if (actionName === config.defaultActionName) {
                             return;
                         }
-                        logger.log("[-->register url<--]\r\n    注册路由:" + defaultAction);
+                        logger.log("[-->register url<--]\r\n    注册路由:" + actionName);
                         actionPath = controllerName + '/' + actionName;
                         setActionRouter(app, '/' + actionPath, 'actions/' + actionPath);
                     })(actionNames[j]);
@@ -325,14 +314,13 @@ function isExists(isexitst, app, newFilePath, url, _res) {
  * @returns     :将两个参数合并后反返回
  */
 function dealOptions(options, userOptions) {
-    if (userOptions) {
-        for (var key in userOptions) {
-            options[key] = userOptions[key];
+    if (options) {
+        for (var key in options) {
+            userOptions[key] = options[key];
         }
 
     }
-
-    return options;
+    return userOptions;
 }
 
 function getUserOptions(options) {
@@ -342,18 +330,13 @@ function getUserOptions(options) {
     } else {
         _options=options;
     }
-    return copyJSON(publicOptions,_options);
-}
+    _options=dealOptions(publicOptions,_options);
+    console.log(_options);
+    return _options;
 
-function copyJSON(source,dec) {
-    for(var key in source)
-    {
-        dec[key]=source[key];
-    }
-    return dec;
 }
 /*
-    获取全局配置数据
+ 获取全局配置数据
  */
 function getPublicOptions(){
     var options=config.renderOptions['*'];
@@ -413,6 +396,7 @@ module.exports.addAction = function(app, url, res) {
  * @returns     :无
  */
 module.exports.ReadConFigFile = function() {
+    getPublicOptions();
     return function(req, res, next) {
         var stat = fs.statSync('./mvc-config.json'),
             data = null;
@@ -423,8 +407,8 @@ module.exports.ReadConFigFile = function() {
             configFileCurrentModifyTime = stat.mtime + '';
             helper.registerHelper(config.helper);
             //获取全局配置数据
-            getPublicOptions();
             hbs.registerPartials(__dirname + '/views/partials');
+            getPublicOptions();
         }
         next();
     };
