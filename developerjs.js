@@ -209,7 +209,7 @@ function setActionRouter(app, url, path, isAjax) {
             logger.log("模板路径：" + getLayout(urlKey) + "           路径：" + urlKey);
             options = dealOptions({
                 layout: getLayout(urlKey)
-            }, getUserOptions(config.renderOptions[urlKey]));
+            }, getUserOptions(urlKey));
             res.renderPjax(path, options);
 
         } else {
@@ -298,7 +298,7 @@ function isExists(isexitst, app, newFilePath, url, _res) {
         setActionRouter(app, url, 'actions' + url);
         options = dealOptions({
             layout: getLayout(urlKey)
-        }, getUserOptions(config.renderOptions[urlKey],config.renderOptions["*"]));
+        }, getUserOptions(urlKey));
         _res.renderPjax('actions/' + urlKey, options);
     } else {
         logger.error("[-->missing action<--]\r\n    action视图文件不存在：" + newFilePath + '.html');
@@ -323,15 +323,20 @@ function dealOptions(options, userOptions) {
     return userOptions;
 }
 
-function getUserOptions(options) {
+function getUserOptions(url) {
+    var options=config.renderOptions[url];
     var _options={};
-    if (typeof(options) === 'string' && options.toLowerCase().indexOf('mvc-config') === 0) {
+    if (typeof options!=='undefined' && typeof(options) === 'string' && options.toLowerCase().indexOf('mvc-config') === 0) {
         _options=readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
     } else {
-        _options=options;
+        _options=options||{};
     }
     _options=dealOptions(publicOptions,_options);
-    console.log(_options);
+
+    if(typeof urlController[url]!=='undefined')
+    {
+        _options=dealOptions(urlController[url],_options);
+    }
     return _options;
 
 }
@@ -413,3 +418,21 @@ module.exports.ReadConFigFile = function() {
         next();
     };
 };
+
+/*
+ 增加url对应数据映射
+ */
+
+var urlController={};
+module.exports.addController=function(url,fn){
+    var _tmp={};
+    if(typeof urlController[url]==='undefined')
+    {
+        urlController[url]=fn();
+    }
+    else {
+        _tmp=fn();
+        dealOptions(_tmp,urlController[url]);
+    }
+
+}

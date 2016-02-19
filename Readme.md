@@ -16,20 +16,44 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var developerjs=require("developerJS");
+var developerjs=require("developerjs");
 var pjax = require('express-pjax');
 var hbs = require('hbs');
 var app = express();
+var os=require("os");
+var task=require("./routes/client");
+var test=require("./routes/testcase");
 
+//增加服务端数据返回机制
+var controller=require('./routes/server/controller');
+controller.setDeveloperjs(developerjs);
+controller.init();
+////controller文件代码如下/////
+//
+//var developerJs=null;
+//module.exports.setDeveloperjs=function(_dev){
+//    developerJs=_dev;
+//}
+//
+//
+//module.exports.init=function(){
+//    developerJs.addController('home/test',function(){
+//        return {
+//            text:"这是来自服务端的数据"
+//        }
+//    });
+//}
+//
+/////////////////////////////
 // view engine setup
-//developerjs默认支持handlebar模板引擎 
+//developerjs默认支持handlebar模板引擎
 app.set('views', path.join(__dirname, 'views'));
 
 app.engine('html', hbs.__express);
 app.set('view engine', 'html');
- 
- 
-//自动读取配置文件更新中间件 
+app.use('/api',test);
+app.use('/',task);
+
 var arguments = process.argv.splice(2);
 if(arguments.length==0)
 {
@@ -38,21 +62,19 @@ if(arguments.length==0)
 }
 else if(arguments[0]=="-online")
 {
-    //online模式下禁用配置文件二次读取
     developerjs.ReadConFigFile();
 }
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// uncomment after placing your favicon in /public
+
 hbs.registerPartials(__dirname + '/views/partials');
-//app.use(favicon(__dirname + '/public/favicon.ico'));
+
 app.use((function(){
   return function(req,res,next){
     hbs.registerPartials(__dirname + '/views/partials');
@@ -176,6 +198,7 @@ $ npm install -g developerjs
     2016-2-13 1.2.2版本：在前版基础上，优化全局参数通配符*的处理;
     2016-2-14 1.2.3版本：在前版基础上，解决bug;
     2016-2-15 1.2.4版本：在前版基础上，修复公共配置问价在online模式下不能默认读取的BUG;
+    2016-2-18 1.2.5版本:在前版基础上,增加addController方法,提供用户在服务端返回数据的方式;
 ## License
     [MIT](LICENSE)
   虽然代码很屎，但违版必究，我说真的，我真的说真的！(LICENSE)
