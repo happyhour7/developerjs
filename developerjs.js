@@ -12,8 +12,10 @@ var logger = require('./mvc-log'),
     hbs = require('hbs'),
     helper = require('./helper'),
     dRouter = require('./router'),
-    publicOptions={},
-    urlMap={};
+    publicOptions = {},
+    urlMap = {},
+    currentReq=null,
+    currentRes=null;
 
 readConfig();
 argus.dealArguments();
@@ -191,16 +193,18 @@ function setActionRouter(app, url, path, isAjax) {
         routers = {},
         userUrl = url;
     routers = getUserRouter();
-    if (typeof routers!=='undefined'&&routers!=null&&typeof routers[url] !== 'undefined' && routers[url] !== null) {
+    if (typeof routers !== 'undefined' && routers != null && typeof routers[url] !== 'undefined' && routers[url] !== null) {
         userUrl = routers[url];
     }
-    urlMap[userUrl]=path;
+    urlMap[userUrl] = path;
     app.get(userUrl, function(req, res, next) {
-        var path=urlMap[userUrl];
+        var path = urlMap[userUrl];
+        currentReq=req;
+        currentRes=res;
         if (req.header('X-PJAX')) {
             logger.log("[-->go url<--]\r\n    转到Pjax路由:" + path, 'pjax');
         } else if (isAjax !== true) {
-            logger.log("[-->go url<--]\r\n "+"url路径："+userUrl+"    转到页面路由：" + path, 'page');
+            logger.log("[-->go url<--]\r\n " + "url路径：" + userUrl + "    转到页面路由：" + path, 'page');
         } else {
             logger.log("[-->go url<--]\r\n    转到ajax路由:" + path, 'ajax');
         }
@@ -273,23 +277,22 @@ module.exports.init = function(app) {
 };
 
 
-module.exports.use=function(path,func){
-    config.diyAction={};
-    for(var key in func)
-    {
-        var allPath=path+key;
-        config.diyAction[allPath]=func[key];
+module.exports.use = function(path, func) {
+        config.diyAction = {};
+        for (var key in func) {
+            var allPath = path + key;
+            config.diyAction[allPath] = func[key];
+        }
     }
-}
-/**
- * 函数功能描述           :判断一个html模板是否存在的回调函数
- * @param       :isexitst       文件是否存在，true、false
- * @param       :app            express对象
- * @param       :newFilePath    所判断的文件
- * @param       :url            文件对应的url地址
- * @param       :_res           当前请求的response对象
- * @returns     :无
- */
+    /**
+     * 函数功能描述           :判断一个html模板是否存在的回调函数
+     * @param       :isexitst       文件是否存在，true、false
+     * @param       :app            express对象
+     * @param       :newFilePath    所判断的文件
+     * @param       :url            文件对应的url地址
+     * @param       :_res           当前请求的response对象
+     * @returns     :无
+     */
 function isExists(isexitst, app, newFilePath, url, _res) {
     var urlKey = url.substring(1),
         options = null;
@@ -314,28 +317,31 @@ function isExists(isexitst, app, newFilePath, url, _res) {
  * @returns     :将两个参数合并后反返回
  */
 function dealOptions(options, userOptions) {
+    if(typeof options === 'function')
+    {
+        options=options(currentReq);
+    }
     if (options) {
         for (var key in options) {
             userOptions[key] = options[key];
         }
-
     }
+    
     return userOptions;
 }
 
 function getUserOptions(url) {
-    var options=config.renderOptions[url];
-    var _options={};
-    if (typeof options!=='undefined' && typeof(options) === 'string' && options.toLowerCase().indexOf('mvc-config') === 0) {
-        _options=readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
+    var options = config.renderOptions[url];
+    var _options = {};
+    if (typeof options !== 'undefined' && typeof(options) === 'string' && options.toLowerCase().indexOf('mvc-config') === 0) {
+        _options = readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
     } else {
-        _options=options||{};
+        _options = options || {};
     }
-    _options=dealOptions(publicOptions,_options);
+    _options = dealOptions(publicOptions, _options);
 
-    if(typeof urlController[url]!=='undefined')
-    {
-        _options=dealOptions(urlController[url],_options);
+    if (typeof urlController[url] !== 'undefined') {
+        _options = dealOptions(urlController[url], _options);
     }
     return _options;
 
@@ -343,20 +349,18 @@ function getUserOptions(url) {
 /*
  获取全局配置数据
  */
-function getPublicOptions(){
-    var options=config.renderOptions['*'];
-    if(typeof options!=='undefined'&&options!==null&&options!=="")
-    {
-        if(typeof options==="string"&&options.toLowerCase().indexOf('mvc-config') === 0)
-        {
-            publicOptions=readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
-        }
-        else {
-            publicOptions=options;
+function getPublicOptions() {
+    var options = config.renderOptions['*'];
+    if (typeof options !== 'undefined' && options !== null && options !== "") {
+        if (typeof options === "string" && options.toLowerCase().indexOf('mvc-config') === 0) {
+            publicOptions = readConfig(options.toLowerCase().indexOf('.json') > 0 ? options : options + ".json");
+        } else {
+            publicOptions = options;
         }
     }
 
 }
+
 function getUserRouter() {
     var userRouters = dRouter.getRouter(config.router);
     return userRouters;
@@ -370,12 +374,11 @@ function getUserRouter() {
  * @returns     :无
  */
 module.exports.addAction = function(app, url, res) {
-    var routers=getUserRouter();
-    var _tmpUrl=url.substring(1);
+    var routers = getUserRouter();
+    var _tmpUrl = url.substring(1);
     logger.warn("[-->register url<--]\r\n    用户输入url：" + url);
-    if(routers!==null && typeof routers !=='undefined' && typeof routers[_tmpUrl]!==undefined&& routers[_tmpUrl] !== null)
-    {
-        url="\\"+routers[_tmpUrl];
+    if (routers !== null && typeof routers !== 'undefined' && typeof routers[_tmpUrl] !== undefined && routers[_tmpUrl] !== null) {
+        url = "\\" + routers[_tmpUrl];
     }
     logger.warn("[-->register url<--]\r\n    路由寻址url：" + url);
     var newFilePath = process.cwd() + "\\views\\actions" + url.replace(/\//ig, "\\");
@@ -423,16 +426,9 @@ module.exports.ReadConFigFile = function() {
  增加url对应数据映射
  */
 
-var urlController={};
-module.exports.addController=function(url,fn){
-    var _tmp={};
-    if(typeof urlController[url]==='undefined')
-    {
-        urlController[url]=fn();
-    }
-    else {
-        _tmp=fn();
-        dealOptions(_tmp,urlController[url]);
-    }
+var urlController = {};
+module.exports.addController = function(url, fn) {
+    var _tmp = {};
+    urlController[url] = fn;
 
 }
