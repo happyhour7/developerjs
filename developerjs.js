@@ -211,11 +211,13 @@ function setActionRouter(app, url, path, isAjax) {
         if (isAjax !== true) {
 
             logger.log("模板路径：" + getLayout(urlKey) + "           路径：" + urlKey);
-            options = dealOptions({
-                layout: getLayout(urlKey)
-            }, getUserOptions(urlKey));
-            res.renderPjax(path, options);
-
+            
+            getUserOptions(urlKey,function(data){
+                options = dealOptions({
+                                layout: getLayout(urlKey)
+                            }, data);
+                res.renderPjax(path, options);
+            });
         } else {
             res.send(getAjaxData(urlKey));
         }
@@ -299,10 +301,12 @@ function isExists(isexitst, app, newFilePath, url, _res) {
     if (isexitst === true) {
         logger.log("[-->add action<--]\r\n    action视图文件存在：" + newFilePath + '   ' + 'action访问路径：' + url);
         setActionRouter(app, url, 'actions' + url);
-        options = dealOptions({
-            layout: getLayout(urlKey)
-        }, getUserOptions(urlKey));
-        _res.renderPjax('actions/' + urlKey, options);
+        getUserOptions(urlKey,function(data){
+            options = dealOptions({
+                layout: getLayout(urlKey)
+            }, data);
+            _res.renderPjax('actions/' + urlKey, options);
+        });
     } else {
         logger.error("[-->missing action<--]\r\n    action视图文件不存在：" + newFilePath + '.html');
         setActionRouter(app, url, 'error404');
@@ -316,21 +320,31 @@ function isExists(isexitst, app, newFilePath, url, _res) {
  * @param       :userOptions            配置文件自定义参数
  * @returns     :将两个参数合并后反返回
  */
-function dealOptions(options, userOptions) {
+function dealOptions(options, userOptions,callback) {
     if(typeof options === 'function')
     {
-        options=options(currentReq);
+        options=options(currentReq,function(result){
+            if (result) {
+                for (var key in result) {
+                    userOptions[key] = result[key];
+                }
+            }
+            callback(userOptions);
+        });
     }
-    if (options) {
-        for (var key in options) {
-            userOptions[key] = options[key];
+    else
+    {
+        if (options) {
+            for (var key in options) {
+                userOptions[key] = options[key];
+            }
         }
+        return userOptions;
     }
-    
-    return userOptions;
+
 }
 
-function getUserOptions(url) {
+function getUserOptions(url,callback) {
     var options = config.renderOptions[url];
     var _options = {};
     if (typeof options !== 'undefined' && typeof(options) === 'string' && options.toLowerCase().indexOf('mvc-config') === 0) {
@@ -339,11 +353,15 @@ function getUserOptions(url) {
         _options = options || {};
     }
     _options = dealOptions(publicOptions, _options);
-
+    var isCallBack=false;
     if (typeof urlController[url] !== 'undefined') {
-        _options = dealOptions(urlController[url], _options);
+        isCallBack=true;
+        dealOptions(urlController[url], _options,function(result){
+            callback(result);
+        });
     }
-    return _options;
+    if(isCallBack===false)
+    callback(_options);
 
 }
 /*
@@ -425,10 +443,8 @@ module.exports.ReadConFigFile = function() {
 /*
  增加url对应数据映射
  */
-
 var urlController = {};
 module.exports.addController = function(url, fn) {
     var _tmp = {};
     urlController[url] = fn;
-
 }
