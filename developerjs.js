@@ -399,7 +399,7 @@ module.exports.addAction = function(app, url, res) {
         url = "\\" + routers[_tmpUrl];
     }
     logger.warn("[-->register url<--]\r\n    路由寻址url：" + url);
-    var newFilePath = process.cwd() + "\\views\\actions" + url.replace(/\//ig, "\\");
+    var newFilePath = process.cwd() + "/views/actions" + url.replace(/\//ig, "/");
     logger.warn("[-->register url<--]\r\n    注册url：" + url);
     if (loadAjax(app, url.substring(1), res) === false) {
         if (fs.existsSync(newFilePath + '.html') === true) {

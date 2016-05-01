@@ -202,6 +202,7 @@ $ npm install -g developerjs
     2016-2-18 1.2.6版本:在前版基础上,为addController方法增加get参数处理;
     2016-4-13 1.2.7版本:在前版基础上,为addController方法增加第二个参数——异步回调执行方法，使addController方法可以异步返回;
     2016-4-13 1.2.9版本:在前版基础上,为addController方法增加第二个参数——异步回调执行方法，使addController方法可以异步返回,BUG修改;
+    2016-4-26 1.3.0版本:在前版基础上,修正linux下文件目录地址BUG;
 ## License
     [MIT](LICENSE)
   虽然代码很屎，但违版必究，我说真的，我真的说真的！(LICENSE)
